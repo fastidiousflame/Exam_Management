@@ -9,7 +9,7 @@ router.get("/teacher/students", async (req, res) => {
   try {
     conn = await oracledb.getConnection({
       user: "project",
-      password: "project0912",
+      password: process.env.DB_PASSWORD,
       connectString: "localhost:1521/XEPDB1",
     });
 
@@ -39,7 +39,7 @@ router.get("/teacher/exams/:course_id", async (req, res) => {
 
     conn = await oracledb.getConnection({
       user: "project",
-      password: "project0912",
+      password: process.env.DB_PASSWORD,
       connectString: "localhost:1521/XEPDB1",
     });
 
@@ -70,7 +70,7 @@ router.get("/teacher/courses", async (req, res) => {
 
     conn = await oracledb.getConnection({
       user: "project",
-      password: "project0912",
+      password: process.env.DB_PASSWORD,
       connectString: "localhost:1521/XEPDB1",
     });
 
@@ -101,7 +101,7 @@ router.get("/teacher/exams", async (req, res) => {
 
     conn = await oracledb.getConnection({
       user: "project",
-      password: "project0912",
+      password: process.env.DB_PASSWORD,
       connectString: "localhost:1521/XEPDB1",
     });
 
