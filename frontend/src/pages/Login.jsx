@@ -6,6 +6,57 @@ const style = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
  
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* ── NAVBAR ── */
+  .scholaris-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    background: rgba(6,8,16,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .scholaris-nav::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.4), rgba(20,184,166,0.3), transparent);
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-brand-icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, #6366f1, #2dd4bf);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .nav-brand-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(90deg, #f0f1f6, #a5b4fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-tagline {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #4b5563;
+    font-family: 'DM Mono', monospace;
+  }
  
   .login-root {
     min-height: 100vh;
@@ -193,6 +244,13 @@ export default function Login() {
   return (
     <>
       <style>{style}</style>
+      <nav className="scholaris-nav">
+        <div className="nav-brand">
+          <div className="nav-brand-icon">🎓</div>
+          <span className="nav-brand-name">Scholaris</span>
+        </div>
+        <span className="nav-tagline">Academic Management System</span>
+      </nav>
       <div className="login-root">
         <div className="login-card">
           <p className="login-eyebrow">Academic Portal</p>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -9,8 +10,12 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Cell,
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
 } from "recharts";
- 
+
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
  
@@ -20,12 +25,114 @@ const style = `
     background: #060810;
     font-family: 'DM Mono', monospace;
   }
+
+  /* ── NAVBAR ── */
+  .scholaris-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    background: rgba(6,8,16,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .scholaris-nav::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.4), rgba(20,184,166,0.3), transparent);
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .nav-brand-icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, #6366f1, #2dd4bf);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .nav-brand-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(90deg, #f0f1f6, #a5b4fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-center {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 4px;
+  }
+  .nav-pill {
+    padding: 6px 16px;
+    border-radius: 7px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.08em;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    border: none;
+    background: none;
+  }
+  .nav-pill:hover { color: #9ca3af; }
+  .nav-pill.active {
+    background: rgba(99,102,241,0.15);
+    color: #a5b4fc;
+    border: 1px solid rgba(99,102,241,0.25);
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .nav-page-tag {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #4b5563;
+    font-family: 'DM Mono', monospace;
+  }
+  .nav-logout {
+    padding: 7px 16px;
+    background: rgba(239,68,68,0.07);
+    border: 1px solid rgba(239,68,68,0.18);
+    border-radius: 8px;
+    color: #f87171;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+  }
+  .nav-logout:hover {
+    background: rgba(239,68,68,0.14);
+    border-color: rgba(239,68,68,0.35);
+  }
  
   .dashboard {
     min-height: 100vh;
     background: #060810;
     color: #e8eaf0;
-    padding: 48px 56px;
+    padding: 108px 56px 48px;
     position: relative;
     overflow: hidden;
     font-family: 'DM Mono', monospace;
@@ -242,6 +349,7 @@ const style = `
     border: 1px solid rgba(255,255,255,0.06);
     border-radius: 20px;
     padding: 28px 30px;
+    margin-bottom: 30px;
   }
   .recharts-cartesian-grid-horizontal line,
   .recharts-cartesian-grid-vertical line {
@@ -262,13 +370,13 @@ const style = `
     box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
   }
 `;
- 
+
 const BAR_COLORS = [
   "#6366f1", "#818cf8", "#a5b4fc",
   "#2dd4bf", "#34d399", "#60a5fa",
   "#f472b6", "#fb923c",
 ];
- 
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
@@ -290,53 +398,90 @@ const CustomTooltip = ({ active, payload, label }) => {
   }
   return null;
 };
- 
+
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [grades, setGrades] = useState([]);
- 
+  const [stats, setStats] = useState({ rank: "-", cgpa: 0 });
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
   useEffect(() => {
-    const fetchGrades = async () => {
+    const fetchData = async () => {
       try {
         const token = localStorage.getItem("token");
         const user = JSON.parse(localStorage.getItem("user"));
- 
-        // 🛑 Safety check
-        if (!user || !user.student_id) {
-          console.error("Not a student or user missing");
-          return;
-        }
- 
-        const response = await axios.get(
-          `http://localhost:5000/api/grades/student/${user.student_id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+
+        if (!user || !user.student_id) return;
+
+        // 🟢 CACHE BUSTER: Added timestamp to bypass browser cache and force fresh fetch
+        const t = Date.now();
+
+        // 1. Fetch Grades
+        const gradeRes = await axios.get(
+          `http://localhost:5000/api/grades/student/${user.student_id}?t=${t}`,
+          { headers: { Authorization: `Bearer ${token}` } }
         );
- 
-        setGrades(response.data);
+        setGrades(gradeRes.data);
+
+        // 2. Fetch Rank and CGPA with a slight delay
+        // This ensures the Oracle View calculation has processed the latest merge
+        setTimeout(async () => {
+            const statRes = await axios.get(
+                `http://localhost:5000/api/teacher/rank/${user.student_id}?t=${t}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (statRes.data) {
+                setStats({ 
+                    rank: statRes.data.STUDENT_RANK || "-", 
+                    cgpa: statRes.data.CGPA || 0 
+                });
+            }
+        }, 300);
+
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard Fetch Error:", err);
       }
     };
- 
-    fetchGrades();
+
+    fetchData();
   }, []);
- 
-  // ✅ Average calculation (safe)
-  const avg =
-    grades.length > 0
-      ? grades.reduce((acc, g) => acc + Number(g.MARKS_OBTAINED || 0), 0) /
-        grades.length
-      : 0;
- 
+
+  const avg = grades.length > 0
+    ? grades.reduce((acc, g) => acc + Number(g.MARKS_OBTAINED || 0), 0) / grades.length
+    : 0;
+
+  // Dynamic Performance Logic
+  const getPerformanceLabel = (score) => {
+    if (score >= 90) return "🔥 Elite";
+    if (score >= 75) return "✨ Excellent";
+    if (score >= 60) return "📈 Good";
+    return "📚 Average";
+  };
+
   return (
     <>
       <style>{style}</style>
+      <nav className="scholaris-nav">
+        <div className="nav-brand">
+          <div className="nav-brand-icon">🎓</div>
+          <span className="nav-brand-name">Scholaris</span>
+        </div>
+        <div className="nav-center">
+          <button className="nav-pill active">Dashboard</button>
+        </div>
+        <div className="nav-right">
+          <span className="nav-page-tag">Student View</span>
+          <button className="nav-logout" onClick={handleLogout}>Logout</button>
+        </div>
+      </nav>
       <div className="dashboard">
         <div className="content">
- 
+
           {/* HEADER */}
           <div className="header">
             <div className="header-left">
@@ -348,25 +493,27 @@ export default function Dashboard() {
               <p className="value">{avg.toFixed(2)}</p>
             </div>
           </div>
- 
+
           {/* CARDS */}
           <div className="cards">
             <div className="card">
-              <p className="card-label">Total Subjects</p>
-              <p className="card-value">{grades.length}</p>
-              <span className="card-icon">📚</span>
+              <p className="card-label">CGPA / Rank</p>
+              <p className="card-value accent">
+                {stats.cgpa ? Number(stats.cgpa).toFixed(2) : "0.00"} / #{stats.rank}
+              </p>
+              <span className="card-icon">🏆</span>
             </div>
             <div className="card">
               <p className="card-label">Average Score</p>
-              <p className="card-value accent">{avg.toFixed(2)}</p>
+              <p className="card-value">{avg.toFixed(2)}</p>
               <span className="card-icon">📊</span>
             </div>
             <div className="card">
               <p className="card-label">Performance</p>
-              <p className="card-value">🔥 Excellent</p>
+              <p className="card-value">{getPerformanceLabel(avg)}</p>
             </div>
           </div>
- 
+
           {/* TABLE */}
           <p className="section-title">Grades Breakdown</p>
           <div className="table-wrap">
@@ -381,7 +528,7 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {grades.map((g, i) => (
+                  {grades.length > 0 ? grades.map((g, i) => (
                     <tr key={i}>
                       <td className="course-name">{g.COURSE_NAME}</td>
                       <td>{g.EXAM_NAME}</td>
@@ -390,39 +537,48 @@ export default function Dashboard() {
                         <span className="grade-pill">{g.GRADE_LETTER}</span>
                       </td>
                     </tr>
-                  ))}
+                  )) : (
+                    <tr>
+                        <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>No records found</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
- 
-          {/* CHART */}
-          <p className="section-title">Performance Chart</p>
-          <div className="chart-wrap">
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={grades} barSize={32} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
-                <CartesianGrid strokeDasharray="1 4" vertical={false} />
-                <XAxis
-                  dataKey="COURSE_NAME"
-                  tick={{ fill: "#4b5563", fontSize: 11, fontFamily: "'DM Mono', monospace" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={{ fill: "#4b5563", fontSize: 11, fontFamily: "'DM Mono', monospace" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.05)" }} />
-                <Bar dataKey="MARKS_OBTAINED" radius={[6, 6, 0, 0]}>
-                  {grades.map((_, index) => (
-                    <Cell key={index} fill={BAR_COLORS[index % BAR_COLORS.length]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+
+          {/* CHARTS GRID */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '20px' }}>
+            <div className="chart-wrap">
+              <p className="section-title" style={{ border: 'none', marginBottom: '15px' }}>Subject Performance</p>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={grades} barSize={32} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
+                  <CartesianGrid strokeDasharray="1 4" vertical={false} />
+                  <XAxis dataKey="COURSE_NAME" tick={{ fill: "#4b5563", fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "#4b5563", fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.05)" }} />
+                  <Bar dataKey="MARKS_OBTAINED" radius={[6, 6, 0, 0]}>
+                    {grades.map((_, index) => (
+                      <Cell key={index} fill={BAR_COLORS[index % BAR_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="chart-wrap">
+              <p className="section-title" style={{ border: 'none', marginBottom: '15px' }}>Skill Analysis</p>
+              <ResponsiveContainer width="100%" height={280}>
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={grades}>
+                  <PolarGrid stroke="rgba(255,255,255,0.05)" />
+                  <PolarAngleAxis dataKey="COURSE_NAME" tick={{ fill: "#4b5563", fontSize: 9 }} />
+                  <Radar name="Score" dataKey="MARKS_OBTAINED" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
+                  <Tooltip content={<CustomTooltip />} />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
- 
+
         </div>
       </div>
     </>

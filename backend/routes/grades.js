@@ -37,31 +37,37 @@ router.post('/', auth(['teacher','admin']), async (req, res) => {
   try {
     conn = await getConnection();
 
+    // 1. Log exactly what is being sent to the terminal
+    console.log(`Attempting update: Student ${student_id}, Exam ${exam_id}, Marks ${marks_obtained}`);
+
+    // 2. Execute Merge with Explicit Number Casting
     await conn.execute(
       `MERGE INTO grades g
        USING dual
-       ON (g.student_id = :sid AND g.exam_id = :eid)
+       ON (g.student_id = TO_NUMBER(:sid) AND g.exam_id = TO_NUMBER(:eid))
        WHEN MATCHED THEN
-         UPDATE SET marks_obtained = :marks, grade_letter = :grade
+         UPDATE SET marks_obtained = TO_NUMBER(:m), 
+                    grade_letter = :gl, 
+                    graded_at = SYSDATE
        WHEN NOT MATCHED THEN
          INSERT (student_id, exam_id, marks_obtained, grade_letter)
-         VALUES (:sid, :eid, :marks, :grade)`,
+         VALUES (TO_NUMBER(:sid), TO_NUMBER(:eid), TO_NUMBER(:m), :gl)`,
       {
         sid: student_id,
         eid: exam_id,
-        marks: marks_obtained,
-        grade: grade_letter
+        m: marks_obtained,
+        gl: grade_letter
       },
-      { autoCommit: true }
+      { autoCommit: true } // ✨ Force Oracle to save immediately
     );
 
-    res.json({ message: 'Grade saved successfully' });
+    res.json({ message: 'Database updated and committed successfully!' });
 
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("ORACLE DATABASE ERROR:", err.message);
+    res.status(500).json({ message: "DB Error: " + err.message });
   } finally {
     if (conn) await conn.close();
   }
 });
-
 module.exports = router;

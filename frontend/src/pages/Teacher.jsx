@@ -1,11 +1,87 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
+import { useNavigate } from "react-router-dom";
 
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { background: #060810; }
+
+  /* ── NAVBAR ── */
+  .scholaris-nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 40px;
+    background: rgba(6,8,16,0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .scholaris-nav::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(45,212,191,0.4), rgba(99,102,241,0.3), transparent);
+  }
+  .nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-brand-icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, #6366f1, #2dd4bf);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .nav-brand-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    background: linear-gradient(90deg, #f0f1f6, #2dd4bf);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .nav-page-tag {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #2dd4bf;
+    font-family: 'DM Mono', monospace;
+    opacity: 0.6;
+  }
+  .nav-logout {
+    padding: 7px 16px;
+    background: rgba(239,68,68,0.07);
+    border: 1px solid rgba(239,68,68,0.18);
+    border-radius: 8px;
+    color: #f87171;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+  }
+  .nav-logout:hover {
+    background: rgba(239,68,68,0.14);
+    border-color: rgba(239,68,68,0.35);
+  }
 
   .teacher-root {
     min-height: 100vh;
@@ -15,49 +91,19 @@ const style = `
     background: #060810;
     font-family: 'DM Mono', monospace;
     position: relative;
-    overflow: hidden;
-  }
-
-  .teacher-root::before {
-    content: '';
-    position: fixed;
-    top: -15%;
-    right: -10%;
-    width: 560px;
-    height: 560px;
-    background: radial-gradient(circle, rgba(20,184,166,0.1) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .teacher-root::after {
-    content: '';
-    position: fixed;
-    bottom: -10%;
-    left: -8%;
-    width: 480px;
-    height: 480px;
-    background: radial-gradient(circle, rgba(99,102,241,0.09) 0%, transparent 70%);
-    pointer-events: none;
+    padding: 80px 20px 20px;
   }
 
   .teacher-card {
     position: relative;
     z-index: 1;
-    width: 480px;
+    width: 100%;
+    max-width: 500px;
     background: rgba(255,255,255,0.025);
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 24px;
-    padding: 48px 44px 44px;
-    overflow: visible;
-  }
-
-  .teacher-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(20,184,166,0.5), transparent);
-    border-radius: 24px 24px 0 0;
+    padding: 40px;
+    color: #f0f1f6;
   }
 
   .teacher-eyebrow {
@@ -65,550 +111,249 @@ const style = `
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: #2dd4bf;
-    margin-bottom: 10px;
-    font-weight: 500;
+    margin-bottom: 8px;
   }
 
   .teacher-title {
     font-family: 'Syne', sans-serif;
-    font-size: 36px;
+    font-size: 32px;
     font-weight: 800;
-    color: #f0f1f6;
-    letter-spacing: -0.03em;
-    margin-bottom: 36px;
+    margin-bottom: 24px;
   }
+
+  .enroll-nav-btn {
+    width: 100%;
+    padding: 12px;
+    background: rgba(45, 212, 191, 0.05);
+    border: 1px dashed rgba(45, 212, 191, 0.3);
+    border-radius: 12px;
+    color: #2dd4bf;
+    cursor: pointer;
+    margin-bottom: 24px;
+    font-family: 'Syne', sans-serif;
+    transition: all 0.2s;
+  }
+  .enroll-nav-btn:hover { background: rgba(45, 212, 191, 0.1); }
 
   .fields-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    margin-bottom: 16px;
   }
 
-  .field-wrap { display: flex; flex-direction: column; position: relative; }
+  .field-wrap { display: flex; flex-direction: column; margin-bottom: 16px; }
   .field-wrap.full { grid-column: 1 / -1; }
 
   .field-label {
     font-size: 10px;
-    letter-spacing: 0.15em;
     text-transform: uppercase;
     color: #4b5563;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    letter-spacing: 0.1em;
   }
 
-  .teacher-input {
+  .teacher-input, .teacher-select {
     width: 100%;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 13px 15px;
-    color: #e8eaf0;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.2s ease, background 0.2s ease;
-  }
-  .teacher-input:focus {
-    border-color: rgba(20,184,166,0.4);
-    background: rgba(20,184,166,0.03);
-  }
-
-  /* ── Custom Dropdown ── */
-  .dropdown-wrapper {
-    position: relative;
-    width: 100%;
-  }
-
-  .dropdown-trigger {
-    width: 100%;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 12px;
-    padding: 13px 15px;
-    color: #e8eaf0;
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    outline: none;
-    cursor: pointer;
-    text-align: left;
-    transition: border-color 0.2s ease, background 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .dropdown-trigger:hover,
-  .dropdown-trigger.open {
-    border-color: rgba(20,184,166,0.4);
-    background: rgba(20,184,166,0.03);
-  }
-
-  .dropdown-trigger .placeholder { color: #374151; }
-
-  .dropdown-trigger .selected-text {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .dropdown-arrow {
-    flex-shrink: 0;
-    width: 16px;
-    height: 16px;
-    color: #4b5563;
-    transition: transform 0.2s ease, color 0.2s ease;
-  }
-  .dropdown-trigger.open .dropdown-arrow {
-    transform: rotate(180deg);
-    color: #2dd4bf;
-  }
-
-  .dropdown-menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0; right: 0;
-    background: #0e1120;
-    border: 1px solid rgba(20,184,166,0.25);
-    border-radius: 14px;
-    overflow: hidden;
-    z-index: 999;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(20,184,166,0.05);
-    animation: dropIn 0.15s ease;
-  }
-
-  @keyframes dropIn {
-    from { opacity: 0; transform: translateY(-6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .dropdown-search {
-    width: 100%;
-    background: rgba(255,255,255,0.04);
-    border: none;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    padding: 11px 14px;
-    color: #e8eaf0;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    outline: none;
-  }
-  .dropdown-search::placeholder { color: #374151; }
-
-  .dropdown-list {
-    max-height: 180px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(20,184,166,0.25) transparent;
-  }
-  .dropdown-list::-webkit-scrollbar { width: 4px; }
-  .dropdown-list::-webkit-scrollbar-track { background: transparent; }
-  .dropdown-list::-webkit-scrollbar-thumb {
-    background: rgba(20,184,166,0.25);
-    border-radius: 4px;
-  }
-
-  .dropdown-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 11px 14px;
-    cursor: pointer;
-    font-size: 12px;
-    color: #9ca3af;
-    transition: background 0.12s ease, color 0.12s ease;
-    gap: 8px;
-  }
-  .dropdown-item:hover {
-    background: rgba(20,184,166,0.07);
-    color: #e8eaf0;
-  }
-  .dropdown-item.active {
-    background: rgba(20,184,166,0.1);
-    color: #2dd4bf;
-  }
-  .dropdown-item .item-label {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .dropdown-item .item-badge {
-    flex-shrink: 0;
-    font-size: 10px;
-    letter-spacing: 0.04em;
-    color: #374151;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 6px;
-    padding: 2px 7px;
-  }
-  .dropdown-item.active .item-badge {
-    color: #2dd4bf;
-    border-color: rgba(20,184,166,0.3);
-    background: rgba(20,184,166,0.08);
-  }
-
-  .dropdown-empty {
-    padding: 20px 14px;
-    text-align: center;
-    font-size: 12px;
-    color: #374151;
-  }
-
-  /* ── Grade buttons ── */
-  .grade-options {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-  }
-
-  .grade-btn {
-    padding: 11px 0;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.08);
-    background: rgba(255,255,255,0.03);
-    color: #6b7280;
-    font-family: 'Syne', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .grade-btn:hover {
-    border-color: rgba(20,184,166,0.3);
-    color: #2dd4bf;
-    background: rgba(20,184,166,0.05);
-  }
-  .grade-btn.selected {
-    border-color: rgba(20,184,166,0.5);
-    background: rgba(20,184,166,0.1);
-    color: #2dd4bf;
-  }
-
-  .divider {
-    height: 1px;
     background: rgba(255,255,255,0.05);
-    margin: 24px 0;
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 12px;
+    border-radius: 10px;
+    color: #e8eaf0;
+    font-family: 'DM Mono', monospace;
+    outline: none;
+    transition: border-color 0.2s;
   }
+  
+  .teacher-select option { background: #111827; color: white; }
+  .teacher-input:focus, .teacher-select:focus { border-color: #2dd4bf; }
+
+  .grade-options { display: flex; gap: 8px; margin-top: 10px; }
+  .grade-btn {
+    flex: 1;
+    padding: 10px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #6b7280;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+  .grade-btn.selected { border-color: #2dd4bf; color: #2dd4bf; background: rgba(45, 212, 191, 0.1); }
 
   .submit-btn {
     width: 100%;
-    padding: 15px;
+    padding: 14px;
     background: #2dd4bf;
     border: none;
-    border-radius: 12px;
-    color: #060810;
-    font-family: 'Syne', sans-serif;
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-    transition: opacity 0.2s ease, transform 0.15s ease;
-  }
-  .submit-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-  .submit-btn:active { transform: translateY(0); }
-  .submit-btn::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
-    pointer-events: none;
-  }
-
-  .toast {
-    margin-bottom: 20px;
     border-radius: 10px;
-    padding: 11px 15px;
-    font-size: 12px;
-    letter-spacing: 0.03em;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    margin-top: 20px;
+    cursor: pointer;
+    color: #060810;
+    transition: transform 0.1s;
   }
-  .toast.success {
-    background: rgba(20,184,166,0.08);
-    border: 1px solid rgba(20,184,166,0.25);
-    color: #2dd4bf;
-  }
-  .toast.error {
-    background: rgba(239,68,68,0.08);
-    border: 1px solid rgba(239,68,68,0.2);
-    color: #f87171;
-  }
-
-  .teacher-footer {
-    margin-top: 24px;
-    text-align: center;
-    font-size: 11px;
-    color: #374151;
-    letter-spacing: 0.05em;
-  }
+  .submit-btn:active { transform: scale(0.98); }
 `;
 
-const GRADES = ["A", "B", "C", "D", "F"];
-
-/* ── Reusable custom dropdown component ── */
-function CustomDropdown({ options, value, onChange, placeholder, labelKey, valueKey, badgeKey }) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState("");
-
-  const filtered = options.filter((o) =>
-    String(o[labelKey] ?? "").toLowerCase().includes(search.toLowerCase())
-  );
-
-  const selected = options.find((o) => String(o[valueKey]) === String(value));
-
-  const handleSelect = (val) => {
-    onChange(val);
-    setOpen(false);
-    setSearch("");
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e) => {
-      if (!e.target.closest(".dropdown-wrapper")) setOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  return (
-    <div className="dropdown-wrapper">
-      <button
-        type="button"
-        className={`dropdown-trigger${open ? " open" : ""}`}
-        onClick={() => setOpen((v) => !v)}
-      >
-        {selected ? (
-          <span className="selected-text">{selected[labelKey]}</span>
-        ) : (
-          <span className="placeholder">{placeholder}</span>
-        )}
-        <svg className="dropdown-arrow" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M4 6l4 4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="dropdown-menu">
-          <input
-            className="dropdown-search"
-            placeholder="Search…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            autoFocus
-          />
-          <div className="dropdown-list">
-            {filtered.length === 0 ? (
-              <p className="dropdown-empty">No results found</p>
-            ) : (
-              filtered.map((o) => (
-                <div
-                  key={o[valueKey]}
-                  className={`dropdown-item${String(value) === String(o[valueKey]) ? " active" : ""}`}
-                  onClick={() => handleSelect(String(o[valueKey]))}
-                >
-                  <span className="item-label">{o[labelKey]}</span>
-                  {badgeKey && (
-                    <span className="item-badge">ID {o[badgeKey]}</span>
-                  )}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function Teacher() {
-  const [form, setForm] = useState({
-    student_id: "",
-    exam_id: "",
-    marks_obtained: "",
-    grade_letter: "",
-  });
-
+  const navigate = useNavigate();
+  const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [exams, setExams] = useState([]);
-  const [courses, setCourses] = useState([]);           // 🟢 1. NEW STATE
-  const [selectedCourse, setSelectedCourse] = useState(""); // 🟢 1. NEW STATE
-  const [toast, setToast] = useState(null);
+  const [selectedCourse, setSelectedCourse] = useState("");
+  const [form, setForm] = useState({ student_id: "", exam_id: "", marks: "", grade: "" });
 
-  const showToast = (type, msg) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 3000);
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-
-        const res1 = await axios.get("http://localhost:5000/api/teacher/students", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const res2 = await axios.get("http://localhost:5000/api/teacher/exams", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        // 🟢 2. FETCH COURSES
-        const res3 = await axios.get("http://localhost:5000/api/teacher/courses", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        setStudents(res1.data);
-        setExams(res2.data);
-        setCourses(res3.data); // 🟢 2. SET COURSES
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchData();
+    const token = localStorage.getItem("token");
+    axios.get("http://localhost:5000/api/teacher/courses", {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => setCourses(res.data))
+    .catch(err => console.error("Course fetch error", err));
   }, []);
 
-  // 🟢 3. FILTER EXAMS BY SELECTED COURSE
   useEffect(() => {
     if (!selectedCourse) return;
-
     const token = localStorage.getItem("token");
+    
+    // Fetch Enrolled Students for this course
+    axios.get(`http://localhost:5000/api/teacher/students/${selectedCourse}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => setStudents(res.data));
 
-    axios
-      .get(`http://localhost:5000/api/teacher/exams/${selectedCourse}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setExams(res.data))
-      .catch((err) => console.error(err));
+    // Fetch Exams for this course
+    axios.get(`http://localhost:5000/api/teacher/exams/${selectedCourse}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => setExams(res.data));
   }, [selectedCourse]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    try {
-      const token = localStorage.getItem("token");
-
-      await axios.post(
-        "http://localhost:5000/api/grades",
-        {
-          student_id: Number(form.student_id),
-          exam_id: Number(form.exam_id),
-          marks_obtained: Number(form.marks_obtained),
-          grade_letter: form.grade_letter,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      showToast("success", "Grade submitted successfully.");
-      setForm({ student_id: "", exam_id: "", marks_obtained: "", grade_letter: "" });
-    } catch (err) {
-      console.log(err.response?.data || err.message);
-      showToast("error", "Failed to submit grade.");
+    const token = localStorage.getItem("token");
+    if(!form.student_id || !form.exam_id || !form.grade) {
+        alert("Please fill all fields");
+        return;
     }
+    try {
+      await axios.post("http://localhost:5000/api/grades", {
+        student_id: Number(form.student_id),
+        exam_id: Number(form.exam_id),
+        marks_obtained: Number(form.marks),
+        grade_letter: form.grade
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      alert("Grade Saved Successfully!");
+    } catch (err) { alert("Error saving grade: " + err.message); }
   };
 
   return (
-    <>
+    <div className="teacher-root">
       <style>{style}</style>
-      <div className="teacher-root">
-        <div className="teacher-card">
-          <p className="teacher-eyebrow">Academic Portal</p>
-          <h2 className="teacher-title">Teacher Panel</h2>
-
-          {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
-
-          <form onSubmit={handleSubmit}>
-            <div className="fields-grid">
-
-              {/* STUDENT DROPDOWN */}
-              <div className="field-wrap">
-                <span className="field-label">Student</span>
-                <CustomDropdown
-                  options={students}
-                  value={form.student_id}
-                  onChange={(val) => setForm({ ...form, student_id: val })}
-                  placeholder="Select Student"
-                  labelKey="EMAIL"
-                  valueKey="STUDENT_ID"
-                  badgeKey="STUDENT_ID"
-                />
-              </div>
-
-              {/* 🟢 4. SUBJECT DROPDOWN — placed above Exam */}
-              <div className="field-wrap">
-                <span className="field-label">Subject</span>
-                <CustomDropdown
-                  options={courses}
-                  value={selectedCourse}
-                  onChange={(val) => {
-                    setSelectedCourse(val);
-                    setForm({ ...form, exam_id: "" }); // reset exam when subject changes
-                  }}
-                  placeholder="Select Subject"
-                  labelKey="COURSE_NAME"
-                  valueKey="COURSE_ID"
-                  badgeKey="COURSE_ID"
-                />
-              </div>
-
-              {/* EXAM DROPDOWN */}
-              <div className="field-wrap">
-                <span className="field-label">Exam</span>
-                <CustomDropdown
-                  options={exams}
-                  value={form.exam_id}
-                  onChange={(val) => setForm({ ...form, exam_id: val })}
-                  placeholder="Select Exam"
-                  labelKey="EXAM_NAME"
-                  valueKey="EXAM_ID"
-                  badgeKey="EXAM_ID"
-                />
-              </div>
-
-              <div className="field-wrap full">
-                <span className="field-label">Marks Obtained</span>
-                <input
-                  className="teacher-input"
-                  placeholder="e.g. 87"
-                  value={form.marks_obtained}
-                  onChange={(e) => setForm({ ...form, marks_obtained: e.target.value })}
-                />
-              </div>
-
-              <div className="field-wrap full">
-                <span className="field-label">Grade Letter</span>
-                <div className="grade-options">
-                  {GRADES.map((g) => (
-                    <button
-                      type="button"
-                      key={g}
-                      className={`grade-btn${form.grade_letter === g ? " selected" : ""}`}
-                      onClick={() => setForm({ ...form, grade_letter: g })}
-                    >
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="divider" />
-
-            <button type="submit" className="submit-btn">
-              Submit Grade →
-            </button>
-          </form>
-
-          <p className="teacher-footer">Academic Management System · v2.0</p>
+      <nav className="scholaris-nav">
+        <div className="nav-brand">
+          <div className="nav-brand-icon">🎓</div>
+          <span className="nav-brand-name">Scholaris</span>
         </div>
+        <div className="nav-right">
+          <span className="nav-page-tag">Teacher Panel</span>
+          <button className="nav-logout" onClick={handleLogout}>Logout</button>
+        </div>
+      </nav>
+      <div className="teacher-card">
+        <p className="teacher-eyebrow">Academic Portal</p>
+        <h2 className="teacher-title">Teacher Panel</h2>
+
+        <button className="enroll-nav-btn" onClick={() => navigate("/enroll")}>
+          ➕ Enroll New Student
+        </button>
+
+        <form onSubmit={handleSubmit}>
+          <div className="field-wrap full">
+            <span className="field-label">Subject</span>
+            <select 
+              className="teacher-select"
+              value={selectedCourse}
+              onChange={(e) => {
+                setSelectedCourse(e.target.value);
+                setForm({...form, student_id: "", exam_id: ""});
+              }}
+            >
+              <option value="">Select Subject</option>
+              {courses.map(c => (
+                <option key={c.COURSE_ID} value={c.COURSE_ID}>{c.COURSE_NAME}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="fields-grid">
+            <div className="field-wrap">
+              <span className="field-label">Student</span>
+              <select 
+                className="teacher-select"
+                value={form.student_id}
+                disabled={!selectedCourse}
+                onChange={(e) => setForm({...form, student_id: e.target.value})}
+              >
+                <option value="">Select Student</option>
+                {students.map(s => (
+                  <option key={s.STUDENT_ID} value={s.STUDENT_ID}>
+                    {s.EMAIL} (ID: {s.STUDENT_ID})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field-wrap">
+              <span className="field-label">Exam</span>
+              <select 
+                className="teacher-select"
+                value={form.exam_id}
+                disabled={!selectedCourse}
+                onChange={(e) => setForm({...form, exam_id: e.target.value})}
+              >
+                <option value="">Select Exam</option>
+                {exams.map(ex => (
+                  <option key={ex.EXAM_ID} value={ex.EXAM_ID}>{ex.EXAM_NAME}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="field-wrap full">
+            <span className="field-label">Marks</span>
+            <input 
+              className="teacher-input" 
+              type="number" 
+              placeholder="0-100"
+              value={form.marks} 
+              onChange={(e) => setForm({...form, marks: e.target.value})} 
+            />
+          </div>
+
+          <div className="field-wrap full">
+            <span className="field-label">Grade Letter</span>
+            <div className="grade-options">
+              {["O", "A+", "A", "B", "C", "F"].map(g => (
+                <button 
+                  key={g} 
+                  type="button" 
+                  className={`grade-btn ${form.grade === g ? 'selected' : ''}`}
+                  onClick={() => setForm({...form, grade: g})}
+                >
+                  {g}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" className="submit-btn">Submit Grade →</button>
+        </form>
       </div>
-    </>
+    </div>
   );
 }
