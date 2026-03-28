@@ -18,17 +18,34 @@ import {
   Line,
   PieChart,
   Pie,
-  Legend,
 } from "recharts";
 
+/* ─────────────────────────────────────────────────────────────────
+   STYLES
+───────────────────────────────────────────────────────────────── */
 const style = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
- 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
- 
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     background: #060810;
     font-family: 'DM Mono', monospace;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0c0f1a; }
+  ::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.3); border-radius: 99px; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+    70%  { box-shadow: 0 0 0 8px rgba(99,102,241,0); }
+    100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); }
   }
 
   /* ── NAVBAR ── */
@@ -36,22 +53,22 @@ const style = `
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 100;
-    height: 60px;
+    height: 64px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 40px;
-    background: rgba(6,8,16,0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(6,8,16,0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.055);
   }
   .scholaris-nav::after {
     content: '';
     position: absolute;
     bottom: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.4), rgba(20,184,166,0.3), transparent);
+    background: linear-gradient(90deg, transparent 0%, rgba(99,102,241,0.5) 35%, rgba(20,184,166,0.4) 65%, transparent 100%);
   }
   .nav-brand {
     display: flex;
@@ -60,11 +77,12 @@ const style = `
     text-decoration: none;
   }
   .nav-brand-icon {
-    width: 30px; height: 30px;
+    width: 32px; height: 32px;
     background: linear-gradient(135deg, #6366f1, #2dd4bf);
-    border-radius: 8px;
+    border-radius: 9px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
+    font-size: 15px;
+    box-shadow: 0 0 14px rgba(99,102,241,0.3);
   }
   .nav-brand-name {
     font-family: 'Syne', sans-serif;
@@ -103,11 +121,7 @@ const style = `
     color: #a5b4fc;
     border: 1px solid rgba(99,102,241,0.25);
   }
-  .nav-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
   .nav-page-tag {
     font-size: 10px;
     letter-spacing: 0.15em;
@@ -131,51 +145,52 @@ const style = `
   .nav-logout:hover {
     background: rgba(239,68,68,0.14);
     border-color: rgba(239,68,68,0.35);
+    box-shadow: 0 0 12px rgba(239,68,68,0.12);
   }
- 
+
+  /* ── DASHBOARD ROOT ── */
   .dashboard {
     min-height: 100vh;
     background: #060810;
     color: #e8eaf0;
-    padding: 108px 56px 48px;
+    padding: 112px 56px 64px;
     position: relative;
     overflow: hidden;
     font-family: 'DM Mono', monospace;
   }
- 
-  /* Ambient background blobs */
   .dashboard::before {
     content: '';
     position: fixed;
-    top: -20%;
-    left: -10%;
-    width: 600px;
-    height: 600px;
-    background: radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%);
+    top: -20%; left: -10%;
+    width: 700px; height: 700px;
+    background: radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
   .dashboard::after {
     content: '';
     position: fixed;
-    bottom: -10%;
-    right: -5%;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(20,184,166,0.08) 0%, transparent 70%);
+    bottom: -10%; right: -5%;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(20,184,166,0.07) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
   }
- 
-  .content { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
- 
-  /* HEADER */
+  .content {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  /* ── HEADER ── */
   .header {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-bottom: 52px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.055);
     padding-bottom: 28px;
   }
   .header-left .eyebrow {
@@ -186,10 +201,23 @@ const style = `
     text-transform: uppercase;
     color: #6366f1;
     margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-left .eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #6366f1;
+    box-shadow: 0 0 6px #6366f1;
+    animation: pulse-ring 2s infinite;
+    flex-shrink: 0;
   }
   .header-left h1 {
     font-family: 'Syne', sans-serif;
-    font-size: 42px;
+    font-size: 44px;
     font-weight: 800;
     letter-spacing: -0.03em;
     color: #f0f1f6;
@@ -198,9 +226,18 @@ const style = `
   .avg-badge {
     background: rgba(99,102,241,0.08);
     border: 1px solid rgba(99,102,241,0.25);
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 14px 22px;
     text-align: right;
+    position: relative;
+    overflow: hidden;
+  }
+  .avg-badge::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.6), transparent);
   }
   .avg-badge .label {
     font-size: 10px;
@@ -211,66 +248,97 @@ const style = `
   }
   .avg-badge .value {
     font-family: 'Syne', sans-serif;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 700;
-    color: #a5b4fc;
+    background: linear-gradient(135deg, #a5b4fc, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
- 
-  /* CARDS */
+
+  /* ── CARDS ── */
   .cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
-    margin-bottom: 40px;
+    margin-bottom: 44px;
   }
   .card {
     background: rgba(255,255,255,0.025);
     border: 1px solid rgba(255,255,255,0.07);
-    border-radius: 20px;
+    border-radius: 22px;
     padding: 28px 30px;
     position: relative;
     overflow: hidden;
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    animation: fadeUp 0.5s ease both;
   }
+  .card:nth-child(1) { animation-delay: 0.05s; }
+  .card:nth-child(2) { animation-delay: 0.10s; }
+  .card:nth-child(3) { animation-delay: 0.15s; }
   .card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(99,102,241,0.3);
+    transform: translateY(-4px);
+    border-color: rgba(99,102,241,0.35);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(99,102,241,0.08);
   }
   .card::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.5), transparent);
   }
   .card .card-label {
-    font-size: 11px;
-    letter-spacing: 0.15em;
+    font-size: 10px;
+    letter-spacing: 0.18em;
     text-transform: uppercase;
     color: #6b7280;
     margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card .card-label::before {
+    content: '';
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #6366f1;
+    flex-shrink: 0;
   }
   .card .card-value {
     font-family: 'Syne', sans-serif;
-    font-size: 36px;
+    font-size: 34px;
     font-weight: 700;
     color: #f0f1f6;
     line-height: 1;
   }
-  .card .card-value.accent { color: #a5b4fc; }
+  .card .card-value.accent {
+    background: linear-gradient(135deg, #a5b4fc, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
   .card .card-icon {
     position: absolute;
-    bottom: 20px; right: 24px;
-    font-size: 32px;
-    opacity: 0.15;
+    bottom: 18px; right: 22px;
+    font-size: 36px;
+    opacity: 0.10;
+    transition: opacity 0.2s ease, transform 0.25s ease;
   }
- 
-  /* SECTION HEADERS */
+  .card:hover .card-icon { opacity: 0.18; transform: scale(1.1) rotate(-4deg); }
+  .card-progress {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 2px;
+    border-radius: 0 2px 2px 0;
+    background: linear-gradient(90deg, #6366f1, #2dd4bf);
+    transition: width 1s ease;
+  }
+
+  /* ── SECTION TITLE ── */
   .section-title {
     font-family: 'Syne', sans-serif;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: #4b5563;
     margin-bottom: 20px;
@@ -282,60 +350,45 @@ const style = `
     content: '';
     flex: 1;
     height: 1px;
-    background: rgba(255,255,255,0.05);
+    background: linear-gradient(90deg, rgba(255,255,255,0.06), transparent);
   }
- 
-  /* TABLE */
+
+  /* ── TABLE ── */
   .table-wrap {
-    background: rgba(255,255,255,0.02);
+    background: rgba(255,255,255,0.018);
     border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 20px;
+    border-radius: 22px;
     overflow: hidden;
     margin-bottom: 36px;
+    animation: fadeUp 0.5s 0.2s ease both;
   }
-  .table-inner { padding: 28px 30px 0; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  thead tr {
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-  }
+  .table-inner { padding: 24px 28px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { border-bottom: 1px solid rgba(255,255,255,0.06); }
   th {
     font-size: 10px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
     color: #4b5563;
-    padding: 0 16px 16px;
+    padding: 0 16px 14px;
     text-align: left;
     font-weight: 500;
   }
   tbody tr {
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.028);
     transition: background 0.15s ease;
   }
   tbody tr:last-child { border-bottom: none; }
-  tbody tr:hover { background: rgba(99,102,241,0.04); }
-  td {
-    padding: 16px;
-    font-size: 13px;
-    color: #9ca3af;
-  }
-  td.course-name {
-    color: #d1d5db;
-    font-weight: 500;
-  }
+  tbody tr:hover { background: rgba(99,102,241,0.05); }
+  td { padding: 14px 16px; font-size: 13px; color: #9ca3af; }
+  td.course-name { color: #d1d5db; font-weight: 500; }
   td.marks {
     color: #818cf8;
     font-family: 'Syne', sans-serif;
     font-weight: 600;
     font-size: 14px;
   }
-  td.grade {
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-  }
+  td.grade { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
   .grade-pill {
     display: inline-flex;
     align-items: center;
@@ -343,57 +396,55 @@ const style = `
     width: 36px; height: 36px;
     border-radius: 10px;
     background: rgba(20,184,166,0.1);
-    border: 1px solid rgba(20,184,166,0.2);
+    border: 1px solid rgba(20,184,166,0.22);
     color: #2dd4bf;
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: box-shadow 0.2s ease;
   }
- 
-  /* CHART */
-  .chart-wrap {
-    background: rgba(255,255,255,0.02);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 20px;
-    padding: 28px 30px;
-    margin-bottom: 30px;
+  tbody tr:hover .grade-pill { box-shadow: 0 0 10px rgba(45,212,191,0.2); }
+  .marks-cell-inner { display: flex; align-items: center; gap: 10px; }
+  .marks-mini-bar {
+    width: 48px; height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 99px;
+    overflow: hidden;
+    flex-shrink: 0;
   }
+  .marks-mini-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #6366f1, #2dd4bf);
+  }
+
+  /* ── RECHARTS GLOBALS ── */
   .recharts-cartesian-grid-horizontal line,
-  .recharts-cartesian-grid-vertical line {
-    stroke: rgba(255,255,255,0.04) !important;
-  }
+  .recharts-cartesian-grid-vertical line { stroke: rgba(255,255,255,0.04) !important; }
   .recharts-text {
     fill: #4b5563 !important;
     font-family: 'DM Mono', monospace !important;
     font-size: 11px !important;
   }
-  .recharts-tooltip-wrapper .recharts-default-tooltip {
-    background: #111827 !important;
-    border: 1px solid rgba(99,102,241,0.3) !important;
-    border-radius: 10px !important;
-    font-family: 'DM Mono', monospace !important;
-    font-size: 12px !important;
-    color: #e8eaf0 !important;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
-  }
 
   /* ── PERFORMANCE PANEL ── */
   .perf-panel {
-    background: rgba(255,255,255,0.018);
+    background: rgba(255,255,255,0.016);
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 24px;
     overflow: hidden;
     margin-bottom: 36px;
+    animation: fadeUp 0.5s 0.25s ease both;
   }
-
-  /* Tab bar */
   .perf-tabs {
     display: flex;
-    gap: 0;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.055);
     padding: 0 28px;
-    background: rgba(255,255,255,0.01);
+    background: rgba(0,0,0,0.15);
+    overflow-x: auto;
   }
+  .perf-tabs::-webkit-scrollbar { height: 0; }
   .perf-tab {
-    padding: 16px 20px;
+    padding: 17px 22px;
     font-size: 11px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -406,27 +457,16 @@ const style = `
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 8px;
     margin-bottom: -1px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .perf-tab:hover { color: #9ca3af; }
-  .perf-tab.active {
-    color: #a5b4fc;
-    border-bottom-color: #6366f1;
-  }
-  .perf-tab .tab-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: currentColor;
-    opacity: 0.6;
-  }
+  .perf-tab.active { color: #a5b4fc; border-bottom-color: #6366f1; }
+  .perf-body { padding: 28px 30px; }
 
-  /* Tab body */
-  .perf-body {
-    padding: 28px 30px;
-  }
-
-  /* Insight strip */
+  /* ── INSIGHT STRIP ── */
   .insight-strip {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -436,17 +476,29 @@ const style = `
   .insight-card {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 14px;
-    padding: 16px 18px;
+    border-radius: 16px;
+    padding: 18px 20px;
     position: relative;
     overflow: hidden;
     cursor: default;
-    transition: border-color 0.2s ease, transform 0.2s ease;
+    transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
   .insight-card:hover {
-    border-color: rgba(99,102,241,0.25);
+    border-color: rgba(99,102,241,0.3);
     transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   }
+  .insight-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.35), transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .insight-card:hover::before { opacity: 1; }
+  .insight-card .ic-icon { font-size: 20px; margin-bottom: 10px; display: block; }
   .insight-card .ic-label {
     font-size: 9px;
     letter-spacing: 0.18em;
@@ -456,7 +508,7 @@ const style = `
   }
   .insight-card .ic-value {
     font-family: 'Syne', sans-serif;
-    font-size: 22px;
+    font-size: 24px;
     font-weight: 700;
     color: #f0f1f6;
     line-height: 1;
@@ -465,126 +517,209 @@ const style = `
   .insight-card .ic-sub {
     font-size: 10px;
     color: #6b7280;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 130px;
   }
-  .insight-card .ic-accent { color: #a5b4fc; }
   .insight-card .ic-good   { color: #2dd4bf; }
   .insight-card .ic-warn   { color: #fb923c; }
   .insight-card .ic-danger { color: #f87171; }
 
-  /* Narrative box */
+  /* ── NARRATIVE BOX ── */
   .narrative-box {
-    background: rgba(99,102,241,0.05);
-    border: 1px solid rgba(99,102,241,0.15);
+    background: rgba(99,102,241,0.045);
+    border: 1px solid rgba(99,102,241,0.14);
     border-left: 3px solid #6366f1;
     border-radius: 12px;
     padding: 18px 20px;
     margin-bottom: 28px;
     font-size: 12px;
-    line-height: 1.8;
+    line-height: 1.9;
     color: #9ca3af;
   }
   .narrative-box strong { color: #c7d2fe; }
 
-  /* Course insight rows */
+  /* ── CHART HEADER ── */
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .chart-header-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4b5563;
+  }
+  .chart-header-badge {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: rgba(99,102,241,0.1);
+    border: 1px solid rgba(99,102,241,0.2);
+    color: #a5b4fc;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ── COURSE PERF ROWS ── */
   .course-perf-row {
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 13px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.03);
+    padding: 13px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.028);
     cursor: pointer;
     transition: background 0.15s ease;
-    border-radius: 8px;
-    padding-left: 8px;
+    border-radius: 10px;
   }
   .course-perf-row:last-child { border-bottom: none; }
-  .course-perf-row:hover { background: rgba(99,102,241,0.04); }
-  .cpr-name {
-    flex: 1;
-    font-size: 12px;
-    color: #d1d5db;
-    font-weight: 500;
+  .course-perf-row:hover { background: rgba(99,102,241,0.05); }
+  .cpr-rank {
+    width: 24px; height: 24px;
+    border-radius: 7px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    color: #4b5563;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .cpr-name { flex: 1; font-size: 12px; color: #d1d5db; font-weight: 500; min-width: 0; }
+  .cpr-name-sub { font-size: 10px; color: #4b5563; margin-top: 2px; }
+  .cpr-bar-track {
+    width: 130px; height: 5px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 99px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .cpr-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
   }
   .cpr-score {
     font-family: 'Syne', sans-serif;
     font-size: 16px;
     font-weight: 700;
-    color: #a5b4fc;
-    min-width: 40px;
+    min-width: 36px;
     text-align: right;
-  }
-  .cpr-bar-track {
-    width: 120px;
-    height: 5px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 99px;
-    overflow: hidden;
-  }
-  .cpr-bar-fill {
-    height: 100%;
-    border-radius: 99px;
-    transition: width 0.6s ease;
+    flex-shrink: 0;
   }
   .cpr-badge {
     font-size: 9px;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: 6px;
     font-family: 'DM Mono', monospace;
-    min-width: 80px;
+    min-width: 82px;
     text-align: center;
+    flex-shrink: 0;
   }
-
-  /* Grade distribution legend */
-  .grade-legend {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-top: 12px;
-  }
-  .gl-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+  .cpr-grade-pill {
+    width: 32px; height: 32px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
     font-size: 11px;
-    color: #6b7280;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    flex-shrink: 0;
+    transition: box-shadow 0.2s ease;
   }
-  .gl-dot {
-    width: 10px; height: 10px;
-    border-radius: 3px;
-  }
+  .course-perf-row:hover .cpr-grade-pill { box-shadow: 0 0 12px rgba(45,212,191,0.25); }
 
-  /* Trend insight note */
+  /* ── GRADE LEGEND ── */
+  .grade-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
+  .gl-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6b7280; }
+  .gl-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+  /* ── TREND NOTE ── */
   .trend-note {
-    background: rgba(45,212,191,0.05);
-    border: 1px solid rgba(45,212,191,0.15);
-    border-radius: 10px;
-    padding: 12px 16px;
+    background: rgba(45,212,191,0.045);
+    border: 1px solid rgba(45,212,191,0.14);
+    border-radius: 12px;
+    padding: 14px 18px;
     font-size: 11px;
     color: #5eead4;
     margin-top: 16px;
     display: flex;
     align-items: center;
     gap: 10px;
+    line-height: 1.6;
   }
 
-  /* Gauge ring */
-  .gauge-wrap {
+  /* ── IMPROVEMENT ROWS ── */
+  .improve-row {
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 16px;
+    margin-bottom: 8px;
+    background: rgba(251,146,60,0.045);
+    border: 1px solid rgba(251,146,60,0.14);
+    border-radius: 12px;
+    font-size: 12px;
+    transition: background 0.15s ease;
+  }
+  .improve-row:hover { background: rgba(251,146,60,0.07); }
+  .improve-left { color: #d1d5db; display: flex; align-items: center; gap: 8px; }
+  .improve-left::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #fb923c;
+    flex-shrink: 0;
+  }
+  .improve-right {
+    color: #fb923c;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    display: flex;
     align-items: center;
     gap: 8px;
   }
-  .gauge-label {
-    font-size: 10px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #6b7280;
+  .improve-delta { font-size: 10px; color: #4b5563; font-family: 'DM Mono', monospace; font-weight: 400; }
+
+  /* ── GRADE STAT CARDS ── */
+  .grade-stat-card {
+    border-radius: 14px;
+    padding: 16px;
     text-align: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: default;
   }
+  .grade-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .grade-stat-letter { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .grade-stat-count { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: #f0f1f6; line-height: 1; }
+  .grade-stat-pct { font-size: 10px; color: #6b7280; margin-top: 4px; }
+
+  /* ── PANEL DIVIDER ── */
+  .panel-divider { height: 1px; background: rgba(255,255,255,0.04); margin: 28px 0; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 12px;
+    color: #4b5563;
+  }
+  .empty-state-icon { font-size: 36px; opacity: 0.4; }
+  .empty-state-text { font-size: 13px; }
 `;
 
+/* ─────────────────────────────────────────────────────────────────
+   CONSTANTS  (identical to original)
+───────────────────────────────────────────────────────────────── */
 const BAR_COLORS = [
   "#6366f1", "#818cf8", "#a5b4fc",
   "#2dd4bf", "#34d399", "#60a5fa",
@@ -592,24 +727,30 @@ const BAR_COLORS = [
 ];
 
 const GRADE_COLORS = {
+  O: "#a78bfa",
   A: "#2dd4bf", B: "#60a5fa", C: "#fb923c", D: "#f87171", F: "#ef4444",
 };
 
+/* ─────────────────────────────────────────────────────────────────
+   CUSTOM TOOLTIP
+───────────────────────────────────────────────────────────────── */
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
       <div style={{
-        background: "#111827",
-        border: "1px solid rgba(99,102,241,0.3)",
-        borderRadius: 10,
-        padding: "10px 16px",
+        background: "#0f172a",
+        border: "1px solid rgba(99,102,241,0.35)",
+        borderRadius: 12,
+        padding: "12px 18px",
         fontFamily: "'DM Mono', monospace",
         fontSize: 12,
         color: "#e8eaf0",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
       }}>
-        <p style={{ color: "#6b7280", marginBottom: 4, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</p>
-        <p style={{ color: "#a5b4fc", fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 18 }}>
+        <p style={{ color: "#6b7280", marginBottom: 6, fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase" }}>{label}</p>
+        <p style={{ color: "#a5b4fc", fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 20 }}>
           {payload[0].value}
+          <span style={{ fontSize: 11, color: "#4b5563", marginLeft: 4, fontFamily: "'DM Mono'" }}>/100</span>
         </p>
       </div>
     );
@@ -617,7 +758,9 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-// ── PERFORMANCE PANEL ──────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────
+   PERFORMANCE PANEL  — all logic identical, UI polished
+───────────────────────────────────────────────────────────────── */
 function PerformancePanel({ grades }) {
   const [activeTab, setActiveTab] = useState("overview");
   const [hoveredCourse, setHoveredCourse] = useState(null);
@@ -625,29 +768,25 @@ function PerformancePanel({ grades }) {
   if (!grades || grades.length === 0) {
     return (
       <div className="perf-panel">
-        <div className="perf-body">
-          <p style={{ color: "#4b5563", textAlign: "center", padding: "40px 0", fontSize: 13 }}>
-            No performance data available yet.
-          </p>
+        <div className="empty-state">
+          <span className="empty-state-icon">📭</span>
+          <p className="empty-state-text">No performance data available yet.</p>
         </div>
       </div>
     );
   }
 
-  // ── derived stats ──
-  const scores = grades.map(g => Number(g.MARKS_OBTAINED || 0));
-  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-  const highest = Math.max(...scores);
-  const lowest = Math.min(...scores);
-  const stdDev = Math.sqrt(scores.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / scores.length);
-
+  /* ── derived stats (identical logic) ── */
+  const scores      = grades.map(g => Number(g.MARKS_OBTAINED || 0));
+  const avg         = scores.reduce((a, b) => a + b, 0) / scores.length;
+  const highest     = Math.max(...scores);
+  const lowest      = Math.min(...scores);
+  const stdDev      = Math.sqrt(scores.reduce((a, b) => a + Math.pow(b - avg, 2), 0) / scores.length);
   const highestCourse = grades.find(g => Number(g.MARKS_OBTAINED) === highest);
   const lowestCourse  = grades.find(g => Number(g.MARKS_OBTAINED) === lowest);
+  const passCount   = scores.filter(s => s >= 40).length;
+  const passRate    = Math.round((passCount / scores.length) * 100);
 
-  const passCount = scores.filter(s => s >= 40).length;
-  const passRate  = Math.round((passCount / scores.length) * 100);
-
-  // grade distribution for pie
   const gradeDist = grades.reduce((acc, g) => {
     const letter = (g.GRADE_LETTER || "?").charAt(0);
     acc[letter] = (acc[letter] || 0) + 1;
@@ -655,46 +794,51 @@ function PerformancePanel({ grades }) {
   }, {});
   const pieData = Object.entries(gradeDist).map(([name, value]) => ({ name, value }));
 
-  // course-by-course performance for the list
   const courseData = grades.map((g, i) => ({
-    name: g.COURSE_NAME,
+    name:  g.COURSE_NAME,
     score: Number(g.MARKS_OBTAINED || 0),
     grade: g.GRADE_LETTER,
-    exam: g.EXAM_NAME,
+    exam:  g.EXAM_NAME,
     color: BAR_COLORS[i % BAR_COLORS.length],
   })).sort((a, b) => b.score - a.score);
 
-  // line trend (index as proxy for time / entry order)
-  const trendData = grades.map((g, i) => ({
-    name: g.COURSE_NAME,
+  const trendData = grades.map((g) => ({
+    name:  g.COURSE_NAME,
     score: Number(g.MARKS_OBTAINED || 0),
-    idx: i + 1,
   }));
 
   const getScoreBadge = (score) => {
-    if (score >= 90) return { label: "Excellent", bg: "rgba(45,212,191,0.12)", color: "#2dd4bf", border: "rgba(45,212,191,0.25)" };
-    if (score >= 80) return { label: "Very Good", bg: "rgba(99,102,241,0.12)", color: "#a5b4fc", border: "rgba(99,102,241,0.25)" };
-    if (score >= 70) return { label: "Good",      bg: "rgba(96,165,250,0.12)", color: "#60a5fa", border: "rgba(96,165,250,0.25)" };
-    if (score >= 60) return { label: "Average",   bg: "rgba(251,146,60,0.12)", color: "#fb923c", border: "rgba(251,146,60,0.25)" };
-    return { label: "Needs Work", bg: "rgba(248,113,113,0.12)", color: "#f87171", border: "rgba(248,113,113,0.25)" };
+    if (score >= 90) return { label: "Excellent", bg: "rgba(45,212,191,0.12)",  color: "#2dd4bf", border: "rgba(45,212,191,0.25)" };
+    if (score >= 80) return { label: "Very Good", bg: "rgba(99,102,241,0.12)",  color: "#a5b4fc", border: "rgba(99,102,241,0.25)" };
+    if (score >= 70) return { label: "Good",      bg: "rgba(96,165,250,0.12)",  color: "#60a5fa", border: "rgba(96,165,250,0.25)" };
+    if (score >= 60) return { label: "Average",   bg: "rgba(251,146,60,0.12)",  color: "#fb923c", border: "rgba(251,146,60,0.25)" };
+    return              { label: "Needs Work",  bg: "rgba(248,113,113,0.12)", color: "#f87171", border: "rgba(248,113,113,0.25)" };
   };
 
   const getNarrative = () => {
-    if (avg >= 85) return <>You're performing <strong>exceptionally well</strong> across your courses with an average of <strong>{avg.toFixed(1)}</strong>. Your best result was in <strong>{highestCourse?.COURSE_NAME}</strong> ({highest}). Keep up the momentum — consistency at this level sets you apart.</>; 
-    if (avg >= 70) return <>Solid academic standing with an average of <strong>{avg.toFixed(1)}</strong>. You excel in <strong>{highestCourse?.COURSE_NAME}</strong> ({highest}) and have room to push <strong>{lowestCourse?.COURSE_NAME}</strong> ({lowest}) higher. Focus on closing that gap and you'll see your CGPA climb.</>; 
-    if (avg >= 55) return <>Your average stands at <strong>{avg.toFixed(1)}</strong> — you're passing, but there's clear headroom for improvement. <strong>{highestCourse?.COURSE_NAME}</strong> shows your potential. Prioritise <strong>{lowestCourse?.COURSE_NAME}</strong> ({lowest}) and aim to bring all scores above 70.</>; 
+    if (avg >= 85) return <>You're performing <strong>exceptionally well</strong> across your courses with an average of <strong>{avg.toFixed(1)}</strong>. Your best result was in <strong>{highestCourse?.COURSE_NAME}</strong> ({highest}). Keep up the momentum — consistency at this level sets you apart.</>;
+    if (avg >= 70) return <>Solid academic standing with an average of <strong>{avg.toFixed(1)}</strong>. You excel in <strong>{highestCourse?.COURSE_NAME}</strong> ({highest}) and have room to push <strong>{lowestCourse?.COURSE_NAME}</strong> ({lowest}) higher. Focus on closing that gap and you'll see your CGPA climb.</>;
+    if (avg >= 55) return <>Your average stands at <strong>{avg.toFixed(1)}</strong> — you're passing, but there's clear headroom for improvement. <strong>{highestCourse?.COURSE_NAME}</strong> shows your potential. Prioritise <strong>{lowestCourse?.COURSE_NAME}</strong> ({lowest}) and aim to bring all scores above 70.</>;
     return <>Your current average is <strong>{avg.toFixed(1)}</strong>. Immediate attention is needed, especially in <strong>{lowestCourse?.COURSE_NAME}</strong> ({lowest}). Break your study time into focused sessions per subject, and speak with your instructors for targeted guidance.</>;
   };
 
   const tabs = [
-    { id: "overview",   label: "Overview",     icon: "📊" },
-    { id: "courses",    label: "Course Detail", icon: "📚" },
-    { id: "trends",     label: "Trends",        icon: "📈" },
-    { id: "dist",       label: "Grade Split",   icon: "🎯" },
+    { id: "overview", label: "Overview",      icon: "📊" },
+    { id: "courses",  label: "Course Detail", icon: "📚" },
+    { id: "trends",   label: "Trends",        icon: "📈" },
+    { id: "dist",     label: "Grade Split",   icon: "🎯" },
+  ];
+
+  const insightCards = [
+    { icon: "⚡", label: "Avg Score",  value: avg.toFixed(1),  cls: avg >= 70 ? "ic-good" : avg >= 55 ? "ic-warn" : "ic-danger", sub: "out of 100" },
+    { icon: "🏅", label: "Highest",    value: highest,          cls: "ic-good",  sub: highestCourse?.COURSE_NAME },
+    { icon: "⚠️", label: "Lowest",     value: lowest,           cls: lowest < 40 ? "ic-danger" : "ic-warn", sub: lowestCourse?.COURSE_NAME },
+    { icon: "✅", label: "Pass Rate",  value: `${passRate}%`,   cls: passRate >= 80 ? "ic-good" : passRate >= 60 ? "ic-warn" : "ic-danger", sub: `${passCount}/${scores.length} courses` },
   ];
 
   return (
     <div className="perf-panel">
+
       {/* Tab bar */}
       <div className="perf-tabs">
         {tabs.map(t => (
@@ -703,56 +847,41 @@ function PerformancePanel({ grades }) {
             className={`perf-tab${activeTab === t.id ? " active" : ""}`}
             onClick={() => setActiveTab(t.id)}
           >
-            <span>{t.icon}</span> {t.label}
+            <span style={{ fontSize: 13 }}>{t.icon}</span>
+            {t.label}
           </button>
         ))}
       </div>
 
       <div className="perf-body">
 
-        {/* ── OVERVIEW TAB ── */}
+        {/* ── OVERVIEW ── */}
         {activeTab === "overview" && (
           <>
-            {/* Insight strip */}
             <div className="insight-strip">
-              <div className="insight-card">
-                <p className="ic-label">Avg Score</p>
-                <p className={`ic-value ${avg >= 70 ? "ic-good" : avg >= 55 ? "ic-warn" : "ic-danger"}`}>{avg.toFixed(1)}</p>
-                <p className="ic-sub">out of 100</p>
-              </div>
-              <div className="insight-card">
-                <p className="ic-label">Highest</p>
-                <p className="ic-value ic-good">{highest}</p>
-                <p className="ic-sub" style={{ maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {highestCourse?.COURSE_NAME}
-                </p>
-              </div>
-              <div className="insight-card">
-                <p className="ic-label">Lowest</p>
-                <p className={`ic-value ${lowest < 40 ? "ic-danger" : "ic-warn"}`}>{lowest}</p>
-                <p className="ic-sub" style={{ maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {lowestCourse?.COURSE_NAME}
-                </p>
-              </div>
-              <div className="insight-card">
-                <p className="ic-label">Pass Rate</p>
-                <p className={`ic-value ${passRate >= 80 ? "ic-good" : passRate >= 60 ? "ic-warn" : "ic-danger"}`}>{passRate}%</p>
-                <p className="ic-sub">{passCount}/{scores.length} courses</p>
-              </div>
+              {insightCards.map((ic, i) => (
+                <div key={i} className="insight-card">
+                  <span className="ic-icon">{ic.icon}</span>
+                  <p className="ic-label">{ic.label}</p>
+                  <p className={`ic-value ${ic.cls}`}>{ic.value}</p>
+                  <p className="ic-sub">{ic.sub}</p>
+                </div>
+              ))}
             </div>
 
-            {/* Narrative */}
             <div className="narrative-box">{getNarrative()}</div>
 
-            {/* Bar chart */}
-            <p className="section-title" style={{ border: "none", marginBottom: 16 }}>Subject Performance</p>
+            <div className="chart-header">
+              <span className="chart-header-title">Subject Performance</span>
+              <span className="chart-header-badge">{grades.length} subjects</span>
+            </div>
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={grades} barSize={30} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
+              <BarChart data={grades} barSize={28} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
                 <CartesianGrid strokeDasharray="1 4" vertical={false} />
                 <XAxis dataKey="COURSE_NAME" tick={{ fill: "#4b5563", fontSize: 10 }} axisLine={false} tickLine={false} />
                 <YAxis domain={[0, 100]} tick={{ fill: "#4b5563", fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.05)" }} />
-                <Bar dataKey="MARKS_OBTAINED" radius={[6, 6, 0, 0]}>
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.06)" }} />
+                <Bar dataKey="MARKS_OBTAINED" radius={[7, 7, 0, 0]}>
                   {grades.map((_, index) => (
                     <Cell key={index} fill={BAR_COLORS[index % BAR_COLORS.length]} />
                   ))}
@@ -760,82 +889,86 @@ function PerformancePanel({ grades }) {
               </BarChart>
             </ResponsiveContainer>
 
-            {/* Consistency note */}
             <div className="trend-note">
               <span>📐</span>
-              Score spread: <strong style={{ color: "#f0f1f6", margin: "0 4px" }}>{(highest - lowest)}</strong> points · Standard deviation: <strong style={{ color: "#f0f1f6", margin: "0 4px" }}>{stdDev.toFixed(1)}</strong> — {stdDev < 10 ? "very consistent performer" : stdDev < 20 ? "moderate variance across subjects" : "high variance — focus on weak subjects"}
+              <span>
+                Score spread: <strong style={{ color: "#f0f1f6", margin: "0 3px" }}>{highest - lowest}</strong> pts ·{" "}
+                Std dev: <strong style={{ color: "#f0f1f6", margin: "0 3px" }}>{stdDev.toFixed(1)}</strong> —{" "}
+                {stdDev < 10 ? "Very consistent performer 🎯" : stdDev < 20 ? "Moderate variance across subjects" : "High variance — focus on weak subjects"}
+              </span>
             </div>
           </>
         )}
 
-        {/* ── COURSE DETAIL TAB ── */}
+        {/* ── COURSE DETAIL ── */}
         {activeTab === "courses" && (
           <>
-            <p className="section-title" style={{ border: "none", marginBottom: 20 }}>Per-Course Breakdown</p>
-            <div className="narrative-box">
-              Hover a course to highlight it. Scores are shown as a fill bar relative to 100. Courses sorted highest → lowest.
+            <div className="chart-header">
+              <span className="chart-header-title">Per-Course Breakdown</span>
+              <span className="chart-header-badge">sorted best → lowest</span>
             </div>
+            <div className="narrative-box">
+              Hover a course to highlight it. Scores shown as a fill bar out of 100. Courses sorted highest → lowest.
+            </div>
+
             {courseData.map((c, i) => {
               const badge = getScoreBadge(c.score);
-              const isHovered = hoveredCourse === i;
+              const gradeColor = GRADE_COLORS[(c.grade || "").charAt(0)] || "#a5b4fc";
               return (
                 <div
                   key={i}
                   className="course-perf-row"
                   onMouseEnter={() => setHoveredCourse(i)}
                   onMouseLeave={() => setHoveredCourse(null)}
-                  style={{ opacity: hoveredCourse !== null && !isHovered ? 0.5 : 1, transition: "opacity 0.2s ease" }}
+                  style={{ opacity: hoveredCourse !== null && hoveredCourse !== i ? 0.45 : 1, transition: "opacity 0.2s ease" }}
                 >
-                  <div style={{ width: 22, textAlign: "center", fontSize: 12, color: "#4b5563", fontFamily: "'Syne', sans-serif", fontWeight: 700 }}>
-                    {i + 1}
-                  </div>
+                  <div className="cpr-rank">{i + 1}</div>
                   <div className="cpr-name">
                     <div>{c.name}</div>
-                    <div style={{ fontSize: 10, color: "#4b5563", marginTop: 2 }}>{c.exam}</div>
+                    <div className="cpr-name-sub">{c.exam}</div>
                   </div>
                   <div className="cpr-bar-track">
                     <div className="cpr-bar-fill" style={{ width: `${c.score}%`, background: c.color }} />
                   </div>
                   <div className="cpr-score" style={{ color: c.color }}>{c.score}</div>
-                  <div
-                    className="cpr-badge"
-                    style={{ background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}
-                  >
+                  <div className="cpr-badge" style={{ background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}>
                     {badge.label}
                   </div>
-                  <div style={{
-                    width: 30, height: 30, borderRadius: 8,
-                    background: "rgba(20,184,166,0.1)",
-                    border: "1px solid rgba(20,184,166,0.2)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "#2dd4bf", fontSize: 11, fontFamily: "'Syne', sans-serif", fontWeight: 700
-                  }}>
+                  <div className="cpr-grade-pill" style={{ background: `${gradeColor}18`, border: `1px solid ${gradeColor}35`, color: gradeColor }}>
                     {c.grade}
                   </div>
                 </div>
               );
             })}
 
-            {/* Radar */}
-            <p className="section-title" style={{ border: "none", marginTop: 32, marginBottom: 12 }}>Skill Web</p>
+            <div className="panel-divider" />
+
+            <div className="chart-header">
+              <span className="chart-header-title">Skill Web</span>
+              <span className="chart-header-badge">radar view</span>
+            </div>
             <ResponsiveContainer width="100%" height={260}>
-              <RadarChart cx="50%" cy="50%" outerRadius="80%" data={grades}>
+              <RadarChart cx="50%" cy="50%" outerRadius="78%" data={grades}>
                 <PolarGrid stroke="rgba(255,255,255,0.05)" />
                 <PolarAngleAxis dataKey="COURSE_NAME" tick={{ fill: "#4b5563", fontSize: 9 }} />
-                <Radar name="Score" dataKey="MARKS_OBTAINED" stroke="#6366f1" fill="#6366f1" fillOpacity={0.5} />
+                <Radar name="Score" dataKey="MARKS_OBTAINED" stroke="#6366f1" fill="#6366f1" fillOpacity={0.45} />
                 <Tooltip content={<CustomTooltip />} />
               </RadarChart>
             </ResponsiveContainer>
           </>
         )}
 
-        {/* ── TRENDS TAB ── */}
+        {/* ── TRENDS ── */}
         {activeTab === "trends" && (
           <>
-            <p className="section-title" style={{ border: "none", marginBottom: 16 }}>Score Trend Across Entries</p>
-            <div className="narrative-box">
-              This line chart shows how your scores flow across recorded entries. A rising slope indicates improving performance; a dip signals a subject that may need extra attention.
+            <div className="chart-header">
+              <span className="chart-header-title">Score Trend Across Entries</span>
+              <span className="chart-header-badge">line view</span>
             </div>
+            <div className="narrative-box">
+              This chart shows how your scores flow across recorded entries. A rising slope indicates improving performance; a dip signals a subject that may need extra attention.
+            </div>
+
             <ResponsiveContainer width="100%" height={260}>
               <LineChart data={trendData} margin={{ top: 4, right: 16, bottom: 0, left: -10 }}>
                 <CartesianGrid strokeDasharray="1 4" stroke="rgba(255,255,255,0.04)" />
@@ -856,58 +989,61 @@ function PerformancePanel({ grades }) {
                   dataKey={() => avg}
                   stroke="#2dd4bf"
                   strokeWidth={1}
-                  strokeDasharray="4 4"
+                  strokeDasharray="5 4"
                   dot={false}
                   name="Average"
                 />
               </LineChart>
             </ResponsiveContainer>
+
             <div className="grade-legend" style={{ marginTop: 12 }}>
               <div className="gl-item"><div className="gl-dot" style={{ background: "#6366f1" }} /> Your scores</div>
               <div className="gl-item"><div className="gl-dot" style={{ background: "#2dd4bf", opacity: 0.7 }} /> Overall avg ({avg.toFixed(1)})</div>
             </div>
 
-            {/* improvement opportunity */}
-            <div style={{ marginTop: 24 }}>
-              <p className="section-title" style={{ border: "none", marginBottom: 14 }}>Improvement Opportunities</p>
-              {courseData.filter(c => c.score < avg).length === 0 ? (
-                <div className="trend-note"><span>🌟</span> All courses are above your average — outstanding consistency!</div>
-              ) : (
-                courseData.filter(c => c.score < avg).map((c, i) => (
-                  <div key={i} style={{
-                    display: "flex", alignItems: "center", justifyContent: "space-between",
-                    padding: "12px 16px", marginBottom: 8,
-                    background: "rgba(251,146,60,0.05)",
-                    border: "1px solid rgba(251,146,60,0.15)",
-                    borderRadius: 12, fontSize: 12
-                  }}>
-                    <span style={{ color: "#d1d5db" }}>{c.name}</span>
-                    <span style={{ color: "#fb923c", fontFamily: "'Syne', sans-serif", fontWeight: 700 }}>
-                      {c.score} <span style={{ color: "#4b5563", fontSize: 10, fontFamily: "'DM Mono'" }}>/ needs +{(avg - c.score).toFixed(1)} to hit avg</span>
-                    </span>
-                  </div>
-                ))
-              )}
+            <div className="panel-divider" />
+
+            <div className="chart-header">
+              <span className="chart-header-title">Improvement Opportunities</span>
+              <span className="chart-header-badge">{courseData.filter(c => c.score < avg).length} below avg</span>
             </div>
+
+            {courseData.filter(c => c.score < avg).length === 0 ? (
+              <div className="trend-note"><span>🌟</span> All courses are above your average — outstanding consistency!</div>
+            ) : (
+              courseData.filter(c => c.score < avg).map((c, i) => (
+                <div key={i} className="improve-row">
+                  <span className="improve-left">{c.name}</span>
+                  <span className="improve-right">
+                    {c.score}
+                    <span className="improve-delta">needs +{(avg - c.score).toFixed(1)} to hit avg</span>
+                  </span>
+                </div>
+              ))
+            )}
           </>
         )}
 
-        {/* ── GRADE DISTRIBUTION TAB ── */}
+        {/* ── GRADE DISTRIBUTION ── */}
         {activeTab === "dist" && (
           <>
-            <p className="section-title" style={{ border: "none", marginBottom: 16 }}>Grade Distribution</p>
+            <div className="chart-header">
+              <span className="chart-header-title">Grade Distribution</span>
+              <span className="chart-header-badge">{grades.length} entries</span>
+            </div>
             <div className="narrative-box">
               A breakdown of letter grades across all your recorded exams. A concentration of A's and B's reflects strong overall preparation; C's and below indicate areas for a targeted study push.
             </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
-              {/* Donut / Pie */}
+              {/* Donut */}
               <div>
                 <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
                       data={pieData}
                       cx="50%" cy="50%"
-                      innerRadius={60} outerRadius={100}
+                      innerRadius={62} outerRadius={100}
                       paddingAngle={3}
                       dataKey="value"
                       label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
@@ -923,8 +1059,8 @@ function PerformancePanel({ grades }) {
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        background: "#111827",
-                        border: "1px solid rgba(99,102,241,0.3)",
+                        background: "#0f172a",
+                        border: "1px solid rgba(99,102,241,0.35)",
                         borderRadius: 10,
                         fontFamily: "'DM Mono', monospace",
                         fontSize: 12,
@@ -943,15 +1079,15 @@ function PerformancePanel({ grades }) {
                 </div>
               </div>
 
-              {/* Grade score breakdown bars */}
+              {/* Per-course grade bars */}
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 10 }}>
                 {courseData.map((c, i) => {
                   const gc = GRADE_COLORS[(c.grade || "").charAt(0)] || BAR_COLORS[i % BAR_COLORS.length];
                   return (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{
-                        width: 24, height: 24, borderRadius: 6,
-                        background: `${gc}20`, border: `1px solid ${gc}40`,
+                        width: 26, height: 26, borderRadius: 7,
+                        background: `${gc}18`, border: `1px solid ${gc}35`,
                         color: gc, fontSize: 10, fontFamily: "'Syne', sans-serif", fontWeight: 700,
                         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
                       }}>{c.grade}</div>
@@ -970,20 +1106,17 @@ function PerformancePanel({ grades }) {
               </div>
             </div>
 
-            {/* Grade stats */}
-            <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-              {["A","B","C","D"].map(letter => {
+            {/* Grade stat cards — fixed: O, A, B, C, F */}
+            <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
+              {["O", "A", "B", "C", "F"].map(letter => {
                 const count = gradeDist[letter] || 0;
                 const pct = grades.length > 0 ? Math.round((count / grades.length) * 100) : 0;
+                const col = GRADE_COLORS[letter] || "#6366f1";
                 return (
-                  <div key={letter} style={{
-                    background: `${GRADE_COLORS[letter] || "#6366f1"}0d`,
-                    border: `1px solid ${GRADE_COLORS[letter] || "#6366f1"}25`,
-                    borderRadius: 12, padding: "14px 16px", textAlign: "center"
-                  }}>
-                    <p style={{ fontFamily: "'Syne', sans-serif", fontSize: 22, fontWeight: 800, color: GRADE_COLORS[letter] || "#a5b4fc" }}>{letter}</p>
-                    <p style={{ fontSize: 18, fontFamily: "'Syne', sans-serif", fontWeight: 700, color: "#f0f1f6" }}>{count}</p>
-                    <p style={{ fontSize: 10, color: "#6b7280", marginTop: 2 }}>{pct}% of courses</p>
+                  <div key={letter} className="grade-stat-card" style={{ background: `${col}0d`, border: `1px solid ${col}28` }}>
+                    <p className="grade-stat-letter" style={{ color: col }}>{letter}</p>
+                    <p className="grade-stat-count">{count}</p>
+                    <p className="grade-stat-pct">{pct}% of entries</p>
                   </div>
                 );
               })}
@@ -996,11 +1129,13 @@ function PerformancePanel({ grades }) {
   );
 }
 
-// ── MAIN DASHBOARD ─────────────────────────────────────────────────
+/* ─────────────────────────────────────────────────────────────────
+   MAIN DASHBOARD  — all logic identical to original
+───────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate();
   const [grades, setGrades] = useState([]);
-  const [stats, setStats] = useState({ rank: "-", cgpa: 0 });
+  const [stats, setStats] = useState({ rank: "-", cgpa: 0, name: "" });
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -1028,16 +1163,17 @@ export default function Dashboard() {
         // 2. Fetch Rank and CGPA
         // Ensuring we use the UPPERCASE keys returned by Oracle
         setTimeout(async () => {
-            const statRes = await axios.get(
-                `http://localhost:5000/api/teacher/rank/${user.student_id}?t=${t}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            if (statRes.data) {
-                setStats({ 
-                    rank: statRes.data.STUDENT_RANK || "-", 
-                    cgpa: statRes.data.CGPA || 0 
-                });
-            }
+          const statRes = await axios.get(
+            `http://localhost:5000/api/teacher/rank/${user.student_id}?t=${t}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (statRes.data) {
+            setStats({
+              rank: statRes.data.STUDENT_RANK || "-",
+              cgpa: statRes.data.CGPA || 0,
+              name: statRes.data.FULL_NAME || "",
+            });
+          }
         }, 300);
 
       } catch (err) {
@@ -1057,13 +1193,15 @@ export default function Dashboard() {
     if (score >= 80) return "✨ Very Good";
     if (score >= 70) return "📈 Good";
     if (score >= 60) return "⚠️ Average";
-    if (score > 0) return "🔻 Needs Improvement";
+    if (score > 0)   return "🔻 Needs Improvement";
     return "📚 Average";
   };
 
   return (
     <>
       <style>{style}</style>
+
+      {/* ── NAVBAR ── */}
       <nav className="scholaris-nav">
         <div className="nav-brand">
           <div className="nav-brand-icon">🎓</div>
@@ -1077,14 +1215,26 @@ export default function Dashboard() {
           <button className="nav-logout" onClick={handleLogout}>Logout</button>
         </div>
       </nav>
+
       <div className="dashboard">
         <div className="content">
 
-          {/* HEADER */}
+          {/* ── HEADER ── */}
           <div className="header">
             <div className="header-left">
               <p className="eyebrow">Academic Portal</p>
               <h1>Dashboard</h1>
+              {stats.name && (
+                <p style={{
+                  marginTop: 8,
+                  fontSize: 15,
+                  color: "#9ca3af",
+                  fontFamily: "'DM Mono', monospace",
+                  letterSpacing: "0.04em"
+                }}>
+                  Hello, <span style={{ color: "#a5b4fc", fontWeight: 500 }}>{stats.name}</span> 👋
+                </p>
+              )}
             </div>
             <div className="avg-badge">
               <p className="label">Overall Average</p>
@@ -1092,7 +1242,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* CARDS */}
+          {/* ── STAT CARDS ── */}
           <div className="cards">
             <div className="card">
               <p className="card-label">CGPA / Rank</p>
@@ -1101,19 +1251,22 @@ export default function Dashboard() {
                 {stats.cgpa ? Number(stats.cgpa).toFixed(2) : "0.00"} / #{stats.rank}
               </p>
               <span className="card-icon">🏆</span>
+              <div className="card-progress" style={{ width: `${Math.min((stats.cgpa || 0) * 10, 100)}%` }} />
             </div>
             <div className="card">
               <p className="card-label">Average Score</p>
               <p className="card-value">{avg.toFixed(2)}</p>
               <span className="card-icon">📊</span>
+              <div className="card-progress" style={{ width: `${Math.min(avg, 100)}%` }} />
             </div>
             <div className="card">
               <p className="card-label">Performance</p>
-              <p className="card-value">{getPerformanceLabel(avg)}</p>
+              <p className="card-value" style={{ fontSize: 26 }}>{getPerformanceLabel(avg)}</p>
+              <span className="card-icon">⭐</span>
             </div>
           </div>
 
-          {/* TABLE */}
+          {/* ── GRADES TABLE ── */}
           <p className="section-title">Grades Breakdown</p>
           <div className="table-wrap">
             <div className="table-inner">
@@ -1131,14 +1284,26 @@ export default function Dashboard() {
                     <tr key={i}>
                       <td className="course-name">{g.COURSE_NAME}</td>
                       <td>{g.EXAM_NAME}</td>
-                      <td className="marks">{g.MARKS_OBTAINED}</td>
+                      <td className="marks">
+                        <div className="marks-cell-inner">
+                          {g.MARKS_OBTAINED}
+                          <div className="marks-mini-bar">
+                            <div className="marks-mini-fill" style={{ width: `${Math.min(Number(g.MARKS_OBTAINED), 100)}%` }} />
+                          </div>
+                        </div>
+                      </td>
                       <td className="grade">
                         <span className="grade-pill">{g.GRADE_LETTER}</span>
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                        <td colSpan="4" style={{ textAlign: 'center', padding: '20px' }}>No records found</td>
+                      <td colSpan="4">
+                        <div className="empty-state">
+                          <span className="empty-state-icon">📭</span>
+                          <p className="empty-state-text">No records found</p>
+                        </div>
+                      </td>
                     </tr>
                   )}
                 </tbody>

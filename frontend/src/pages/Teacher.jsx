@@ -199,6 +199,7 @@ const style = `
 
 export default function Teacher() {
   const navigate = useNavigate();
+  const userName = JSON.parse(localStorage.getItem("user"))?.name || "";
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [exams, setExams] = useState([]);
@@ -268,6 +269,18 @@ export default function Teacher() {
       <div className="teacher-card">
         <p className="teacher-eyebrow">Academic Portal</p>
         <h2 className="teacher-title">Teacher Panel</h2>
+        {userName && (
+          <p style={{
+            marginTop: -16,
+            marginBottom: 20,
+            fontSize: 14,
+            color: "#9ca3af",
+            fontFamily: "'DM Mono', monospace",
+            letterSpacing: "0.04em"
+          }}>
+            Hello, <span style={{ color: "#2dd4bf", fontWeight: 500 }}>{userName}</span> 👋
+          </p>
+        )}
 
         <button className="enroll-nav-btn" onClick={() => navigate("/enroll")}>
           ➕ Enroll New Student
