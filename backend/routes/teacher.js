@@ -26,20 +26,32 @@ router.get("/teacher/students/:course_id", async (req, res) => {
 });
 
 // ✅ NEW: Get Ranking & CGPA for a student
-router.get("/rank/:student_id", async (req, res) => {
+// ✅ CHANGE: Added /teacher to the path to match your frontend call
+router.get("/teacher/rank/:student_id", async (req, res) => {
   let conn;
   try {
-    conn = await oracledb.getConnection({
-      user: "project", password: process.env.DB_PASSWORD, connectString: "localhost:1521/XEPDB1",
-    });
+    // Also fixed the dbConfig/getConnection issue here
+    const { getConnection } = require('../config/db');
+    conn = await getConnection(); 
+    
     const result = await conn.execute(
       `SELECT * FROM student_rankings WHERE student_id = :id`,
       [req.params.student_id],
       { outFormat: oracledb.OUT_FORMAT_OBJECT }
     );
+
+    if (result.rows.length === 0) {
+      return res.json({ STUDENT_RANK: "-", CGPA: 0 });
+    }
+    
+    console.log("Rank Data Sent:", result.rows[0]); 
     res.json(result.rows[0]);
-  } catch (err) { res.status(500).send(err.message); }
-  finally { if (conn) await conn.close(); }
+  } catch (err) {
+    console.error("RANK FETCH ERROR:", err.message);
+    res.status(500).send(err.message);
+  } finally {
+    if (conn) await conn.close();
+  }
 });
 
 router.get("/teacher/exams/:course_id", async (req, res) => {
