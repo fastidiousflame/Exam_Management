@@ -393,16 +393,13 @@ const style = `
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px; height: 36px;
+    min-width: 36px; height: 36px;
+    padding: 0 6px;
     border-radius: 10px;
-    background: rgba(20,184,166,0.1);
-    border: 1px solid rgba(20,184,166,0.22);
-    color: #2dd4bf;
     font-size: 12px;
     font-weight: 700;
     transition: box-shadow 0.2s ease;
   }
-  tbody tr:hover .grade-pill { box-shadow: 0 0 10px rgba(45,212,191,0.2); }
   .marks-cell-inner { display: flex; align-items: center; gap: 10px; }
   .marks-mini-bar {
     width: 48px; height: 3px;
@@ -718,7 +715,7 @@ const style = `
 `;
 
 /* ─────────────────────────────────────────────────────────────────
-   CONSTANTS  (identical to original)
+   CONSTANTS
 ───────────────────────────────────────────────────────────────── */
 const BAR_COLORS = [
   "#6366f1", "#818cf8", "#a5b4fc",
@@ -726,10 +723,16 @@ const BAR_COLORS = [
   "#f472b6", "#fb923c",
 ];
 
+// FIX 1: Added "A+" as a distinct color key
 const GRADE_COLORS = {
   O: "#a78bfa",
+  "A+": "#34d399",
   A: "#2dd4bf", B: "#60a5fa", C: "#fb923c", D: "#f87171", F: "#ef4444",
 };
+
+// Helper: resolve color for any grade letter (full key first, then first char fallback)
+const getGradeColor = (letter) =>
+  GRADE_COLORS[letter] || GRADE_COLORS[(letter || "").charAt(0)] || "#6366f1";
 
 /* ─────────────────────────────────────────────────────────────────
    CUSTOM TOOLTIP
@@ -759,7 +762,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 /* ─────────────────────────────────────────────────────────────────
-   PERFORMANCE PANEL  — all logic identical, UI polished
+   PERFORMANCE PANEL
 ───────────────────────────────────────────────────────────────── */
 function PerformancePanel({ grades }) {
   const [activeTab, setActiveTab] = useState("overview");
@@ -776,7 +779,7 @@ function PerformancePanel({ grades }) {
     );
   }
 
-  /* ── derived stats (identical logic) ── */
+  /* ── derived stats ── */
   const scores      = grades.map(g => Number(g.MARKS_OBTAINED || 0));
   const avg         = scores.reduce((a, b) => a + b, 0) / scores.length;
   const highest     = Math.max(...scores);
@@ -787,8 +790,9 @@ function PerformancePanel({ grades }) {
   const passCount   = scores.filter(s => s >= 40).length;
   const passRate    = Math.round((passCount / scores.length) * 100);
 
+  // FIX 2: Use full grade letter as key — don't collapse "A+" to "A" via charAt(0)
   const gradeDist = grades.reduce((acc, g) => {
-    const letter = (g.GRADE_LETTER || "?").charAt(0);
+    const letter = g.GRADE_LETTER || "?";
     acc[letter] = (acc[letter] || 0) + 1;
     return acc;
   }, {});
@@ -913,7 +917,8 @@ function PerformancePanel({ grades }) {
 
             {courseData.map((c, i) => {
               const badge = getScoreBadge(c.score);
-              const gradeColor = GRADE_COLORS[(c.grade || "").charAt(0)] || "#a5b4fc";
+              // FIX 3 (part): use getGradeColor helper for full "A+" support
+              const gradeColor = getGradeColor(c.grade);
               return (
                 <div
                   key={i}
@@ -983,7 +988,6 @@ function PerformancePanel({ grades }) {
                   dot={{ fill: "#a5b4fc", r: 5, strokeWidth: 0 }}
                   activeDot={{ fill: "#f0f1f6", r: 7, stroke: "#6366f1", strokeWidth: 2 }}
                 />
-                {/* Reference average line as a flat dashed */}
                 <Line
                   type="monotone"
                   dataKey={() => avg}
@@ -1052,7 +1056,7 @@ function PerformancePanel({ grades }) {
                       {pieData.map((entry, index) => (
                         <Cell
                           key={index}
-                          fill={GRADE_COLORS[entry.name] || BAR_COLORS[index % BAR_COLORS.length]}
+                          fill={getGradeColor(entry.name) || BAR_COLORS[index % BAR_COLORS.length]}
                           stroke="transparent"
                         />
                       ))}
@@ -1072,7 +1076,7 @@ function PerformancePanel({ grades }) {
                 <div className="grade-legend" style={{ justifyContent: "center" }}>
                   {pieData.map((e, i) => (
                     <div key={i} className="gl-item">
-                      <div className="gl-dot" style={{ background: GRADE_COLORS[e.name] || BAR_COLORS[i % BAR_COLORS.length] }} />
+                      <div className="gl-dot" style={{ background: getGradeColor(e.name) || BAR_COLORS[i % BAR_COLORS.length] }} />
                       Grade {e.name} ({e.value})
                     </div>
                   ))}
@@ -1082,7 +1086,8 @@ function PerformancePanel({ grades }) {
               {/* Per-course grade bars */}
               <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 10 }}>
                 {courseData.map((c, i) => {
-                  const gc = GRADE_COLORS[(c.grade || "").charAt(0)] || BAR_COLORS[i % BAR_COLORS.length];
+                  // FIX 3 (part): use getGradeColor for full "A+" support here too
+                  const gc = getGradeColor(c.grade) || BAR_COLORS[i % BAR_COLORS.length];
                   return (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <div style={{
@@ -1106,12 +1111,12 @@ function PerformancePanel({ grades }) {
               </div>
             </div>
 
-            {/* Grade stat cards — fixed: O, A, B, C, F */}
-            <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
-              {["O", "A", "B", "C", "F"].map(letter => {
+            {/* FIX 4: Grade stat cards — added "A+", 6-column grid */}
+            <div style={{ marginTop: 24, display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+              {["O", "A+", "A", "B", "C", "F"].map(letter => {
                 const count = gradeDist[letter] || 0;
                 const pct = grades.length > 0 ? Math.round((count / grades.length) * 100) : 0;
-                const col = GRADE_COLORS[letter] || "#6366f1";
+                const col = getGradeColor(letter);
                 return (
                   <div key={letter} className="grade-stat-card" style={{ background: `${col}0d`, border: `1px solid ${col}28` }}>
                     <p className="grade-stat-letter" style={{ color: col }}>{letter}</p>
@@ -1130,7 +1135,7 @@ function PerformancePanel({ grades }) {
 }
 
 /* ─────────────────────────────────────────────────────────────────
-   MAIN DASHBOARD  — all logic identical to original
+   MAIN DASHBOARD
 ───────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -1161,7 +1166,6 @@ export default function Dashboard() {
         setGrades(gradeRes.data);
 
         // 2. Fetch Rank and CGPA
-        // Ensuring we use the UPPERCASE keys returned by Oracle
         setTimeout(async () => {
           const statRes = await axios.get(
             `http://localhost:5000/api/teacher/rank/${user.student_id}?t=${t}`,
@@ -1247,7 +1251,6 @@ export default function Dashboard() {
             <div className="card">
               <p className="card-label">CGPA / Rank</p>
               <p className="card-value accent">
-                {/* Fixed numeric check and case sensitivity mapping */}
                 {stats.cgpa ? Number(stats.cgpa).toFixed(2) : "0.00"} / #{stats.rank}
               </p>
               <span className="card-icon">🏆</span>
@@ -1280,23 +1283,36 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {grades.length > 0 ? grades.map((g, i) => (
-                    <tr key={i}>
-                      <td className="course-name">{g.COURSE_NAME}</td>
-                      <td>{g.EXAM_NAME}</td>
-                      <td className="marks">
-                        <div className="marks-cell-inner">
-                          {g.MARKS_OBTAINED}
-                          <div className="marks-mini-bar">
-                            <div className="marks-mini-fill" style={{ width: `${Math.min(Number(g.MARKS_OBTAINED), 100)}%` }} />
+                  {grades.length > 0 ? grades.map((g, i) => {
+                    // FIX 5: Grade pill color is now dynamic per grade letter
+                    const gc = getGradeColor(g.GRADE_LETTER);
+                    return (
+                      <tr key={i}>
+                        <td className="course-name">{g.COURSE_NAME}</td>
+                        <td>{g.EXAM_NAME}</td>
+                        <td className="marks">
+                          <div className="marks-cell-inner">
+                            {g.MARKS_OBTAINED}
+                            <div className="marks-mini-bar">
+                              <div className="marks-mini-fill" style={{ width: `${Math.min(Number(g.MARKS_OBTAINED), 100)}%` }} />
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="grade">
-                        <span className="grade-pill">{g.GRADE_LETTER}</span>
-                      </td>
-                    </tr>
-                  )) : (
+                        </td>
+                        <td className="grade">
+                          <span
+                            className="grade-pill"
+                            style={{
+                              background: `${gc}1a`,
+                              border: `1px solid ${gc}38`,
+                              color: gc,
+                            }}
+                          >
+                            {g.GRADE_LETTER}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  }) : (
                     <tr>
                       <td colSpan="4">
                         <div className="empty-state">
